@@ -1,0 +1,358 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#101820"><title>RS GPS Racing Labs Beta</title><style>
+:root{color-scheme:dark;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#0c131b;color:#edf5fa}*{box-sizing:border-box}body{margin:0;padding:16px 12px 90px;max-width:800px;margin:auto}h1{font-size:1.45rem;margin:6px 0}h2{font-size:1.1rem;margin:8px 0 14px}small,.muted{color:#a8bac8}header{padding:12px 2px 20px}.brand{color:#3ce0b1;font-weight:800;letter-spacing:.07em;font-size:.8rem}.card{border:1px solid #34495b;border-radius:16px;background:#14212d;padding:16px;margin:12px 0}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.metric{background:#0d1924;border-radius:12px;padding:12px;min-height:78px}.metric b{display:block;font-size:1.4rem;font-variant-numeric:tabular-nums;margin-top:5px}.metric span{font-size:.77rem;color:#b5c5d1}button,select,input{font:inherit;min-height:46px;border-radius:11px}button{border:1px solid #526777;background:#203344;color:white;padding:10px 13px;cursor:pointer}button.primary{background:#00a979;border-color:#00a979;color:#051914;font-weight:800}button.danger{background:#542d35;border-color:#9c5360}button:disabled{opacity:.45;cursor:not-allowed}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #3ce0b1}input,select{width:100%;padding:10px;background:#0b1722;color:white;border:1px solid #536777}label{display:block;font-size:.85rem;margin:10px 0 5px;color:#c8d5de}.row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.row>*{flex:1}.row .compact{flex:0 0 auto}.hidden{display:none!important}.lights{display:flex;justify-content:center;gap:16px;margin:15px}.light{width:64px;height:64px;border-radius:50%;background:#293440;border:3px solid #4b5b67}.light.red{background:#df394c;box-shadow:0 0 24px #df394c88}.light.yellow{background:#f6bc3e;box-shadow:0 0 24px #f6bc3e88}.light.green{background:#18e58a;box-shadow:0 0 30px #18e58aaa}.status{padding:12px;border-radius:10px;background:#263b4c;margin:10px 0}.warn{border-left:4px solid #f6bc3e}.ok{border-left:4px solid #19c795}.bad{border-left:4px solid #e66370}canvas{width:100%;height:250px;background:#0b1722;border-radius:12px;border:1px solid #334a5c}.run{display:flex;align-items:center;gap:10px;padding:10px;border-bottom:1px solid #34495b}.run label{margin:0;flex:1}.run input{width:22px;height:22px;min-height:22px}.run button{min-height:38px}details{padding:10px;background:#0b1722;border-radius:9px}summary{cursor:pointer;font-weight:650}.pill{display:inline-block;border-radius:99px;background:#263d4a;padding:4px 9px;font-size:.75rem}.footer{font-size:.75rem;color:#a4b7c4;line-height:1.5;margin:24px 0}#notice{white-space:pre-wrap}a{color:#70e4c4}@media(min-width:600px){.grid{grid-template-columns:repeat(4,1fr)}}
+
+/* V1.3: pantalla de carrera dedicada, sin controles secundarios */
+#raceOverlay{max-width:none;width:100vw;height:100dvh;min-height:100vh;overflow:hidden;gap:clamp(10px,2.5vh,24px);padding:clamp(16px,5vw,40px);transition:none}
+#raceOverlay.phase-running{justify-content:center;gap:clamp(18px,5vh,48px)}
+#raceOverlay.phase-running #raceBrand,#raceOverlay.phase-running #raceSignal,#raceOverlay.phase-running #raceHint,#raceOverlay.phase-running #raceClockLabel{display:none!important}
+#raceOverlay.phase-running #raceClock{font-size:clamp(26px,7vw,45px);font-weight:700;color:#d6e6f4}
+#raceOverlay.phase-running #raceDistance{font-size:clamp(30px,9vw,66px)}
+#raceOverlay.phase-running #raceTrack{height:clamp(78px,18vh,165px);border:5px solid #b8ecff;box-shadow:0 0 30px #19ffe6aa, inset 0 0 25px #041923}
+#raceOverlay.phase-running #raceFill{background:linear-gradient(90deg,#00a58d,#00ffbf 65%,#d5ff6a);box-shadow:0 0 38px #18ffbd}
+#raceOverlay.phase-running #racePercent{font-size:clamp(48px,15vw,110px);color:#efffff;text-shadow:0 0 22px #22f5ce}
+#raceOverlay.phase-green{animation:goScreenFlash .22s steps(1,end) 8}
+#raceOverlay.phase-green #raceSignal{color:#eafff2;text-shadow:0 0 25px #00ff55,0 0 85px #00ff55;font-size:clamp(70px,19vw,160px)}
+@keyframes goScreenFlash{0%,100%{background:#00c83a;box-shadow:inset 0 0 140px #4aff6b}50%{background:#003e1c;box-shadow:inset 0 0 70px #00ff55}}
+#raceOverlay.phase-finished{animation:finishScreenFlash .38s steps(1,end) 10;justify-content:center}
+#raceOverlay.phase-finished #raceBrand,#raceOverlay.phase-finished #raceClockLabel,#raceOverlay.phase-finished #raceClock,#raceOverlay.phase-finished #raceDistance,#raceOverlay.phase-finished #raceTrack,#raceOverlay.phase-finished #racePercent,#raceOverlay.phase-finished #raceHint{display:none!important}
+#raceOverlay.phase-finished #raceSignal{font-size:clamp(48px,13vw,120px);line-height:1.1;color:#fff;background:transparent;border:0;box-shadow:none;text-shadow:0 0 22px #fff,0 0 70px #ff001a;padding:12px}
+@keyframes finishScreenFlash{0%,100%{background:#ff1028;box-shadow:inset 0 0 110px #ff6b7c}50%{background:#320008;box-shadow:inset 0 0 65px #ff1525}}
+#reviewChart{display:block;width:100%;height:auto;max-height:320px;background:#0b1722;border:1px solid #3c5669;border-radius:12px;margin:12px 0}
+@media(prefers-reduced-motion:reduce){#raceOverlay.phase-finished,#raceOverlay.phase-green{animation:none}#raceOverlay.phase-finished{background:#df1025}#raceOverlay.phase-green{background:#087b3c}}
+
+/* V1.4: misma pantalla para semáforo, espera y carrera. */
+#raceOverlay{justify-content:center!important;gap:clamp(15px,4vh,38px)!important}
+#raceOverlay #raceBrand,#raceOverlay #raceClockLabel,#raceOverlay #raceHint,#raceOverlay #racePercent{display:none!important}
+#raceOverlay #raceClock{font-size:clamp(34px,8vw,62px)!important;color:#e9f8ff!important;font-weight:700!important}
+#raceOverlay #raceDistance{font-size:clamp(28px,7vw,56px)!important}
+#raceOverlay #raceTrack{height:clamp(76px,17vh,150px)!important;border:5px solid #9fece8!important;box-shadow:0 0 30px #11eac977!important}
+#raceOverlay #raceFill{background:linear-gradient(90deg,#00a58d,#00ffc1 65%,#d7ff76)!important;box-shadow:0 0 36px #00ffb0!important}
+#raceLights{display:flex;gap:clamp(14px,4vw,32px);justify-content:center;align-items:center}
+#raceLights .light{width:clamp(54px,11vw,88px);height:clamp(54px,11vw,88px);border-width:4px}
+#raceOverlay.phase-green #raceSignal{position:absolute;top:38%;left:0;width:100%;z-index:2;pointer-events:none}
+#raceOverlay #raceSignal:not(.go):not(.finished){display:none!important}
+#raceOverlay .go-ended{display:none!important}
+#raceOverlay.phase-finished #raceLights{display:none!important}
+#raceOverlay.phase-finished #raceSignal{display:block!important;position:static;font-size:clamp(42px,11vw,100px)}
+#raceOverlay.phase-finished #raceClock,#raceOverlay.phase-finished #raceDistance,#raceOverlay.phase-finished #raceTrack{display:none!important}
+@media(max-width:500px){#raceOverlay{padding:16px!important}#raceOverlay #raceTrack{height:18vh!important}}
+</style><style>
+/* Beta 1.5: al pasar a verde, ocultar semáforo y mostrar solo cronómetro y barra. */
+#raceOverlay.phase-green #raceLights,
+#raceOverlay.phase-running #raceLights{display:none!important}
+#raceOverlay #raceDistance,#raceOverlay #racePercent{display:none!important}
+#raceOverlay.phase-running #raceClock,
+#raceOverlay.phase-green #raceClock{font-size:clamp(38px,9vw,68px)!important}
+#raceOverlay.phase-running #raceTrack,
+#raceOverlay.phase-green #raceTrack{height:clamp(90px,20vh,175px)!important}
+</style><style>
+/* Mantiene el skin RS: azul oscuro, turquesa y paneles metálicos */
+:root{background:#0b1220;color:#eaf0fc}body{background:linear-gradient(145deg,#0b1220,#101b2d 60%,#0b1220)}header{border-bottom:2px solid #2dd4bf;background:#151f32;border-radius:0 0 14px 14px}.brand{color:#5eead4}.card{background:#172338;border-color:#34435c}.metric{background:#0d1728}.primary,button.primary{background:#0f766e;border-color:#2dd4bf;color:#fff}button:focus-visible{outline-color:#2dd4bf}
+#raceOverlay{position:fixed;inset:0;z-index:1000;background:radial-gradient(ellipse at center,#172b40 0%,#08111d 72%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:clamp(14px,5vw,35px);text-align:center;gap:clamp(14px,4vh,32px);color:#fff}
+#raceBrand{font-size:clamp(12px,3vw,20px);color:#5eead4;font-weight:800;letter-spacing:.08em}
+#raceSignal{font-size:clamp(30px,10vw,78px);font-weight:1000;letter-spacing:.04em;color:#f5bf43;text-shadow:0 0 28px #e9b13a80;line-height:1.1}
+#raceSignal.demo-red{color:#ff4050;text-shadow:0 0 30px #ff1020}#raceSignal.demo-yellow{color:#ffe44e;text-shadow:0 0 30px #ffd000}#raceSignal.go{color:#36ff96;text-shadow:0 0 22px #0aff80,0 0 60px #06d965}
+#raceSignal.finished{color:#fff;background:#c90020;border:5px solid #ff4356;border-radius:24px;padding:clamp(18px,5vw,35px);width:100%;box-shadow:0 0 50px #ff1222, inset 0 0 35px #ff2838}
+#raceSignal.finished.flash{animation:finishFlash .36s steps(1,end) 10}
+@keyframes finishFlash{0%,100%{opacity:1;background:#d80019;box-shadow:0 0 55px #ff1525,0 0 110px #f20b18}50%{opacity:.35;background:#500006;box-shadow:none}}
+#raceClockLabel{font-size:clamp(12px,3vw,18px);font-weight:700;color:#c8d5e9}
+#raceClock{font-size:clamp(56px,16vw,128px);font-weight:850;letter-spacing:-.045em;font-variant-numeric:tabular-nums;line-height:1}
+#raceDistance{font-size:clamp(22px,7vw,50px);font-weight:800;font-variant-numeric:tabular-nums}
+#raceTrack{width:100%;height:clamp(34px,7vh,68px);border-radius:100px;background:#34435c;border:3px solid #90a6bb;overflow:hidden;box-shadow:0 0 28px #2dd4bf50}
+#raceFill{width:0%;height:100%;background:linear-gradient(90deg,#008b82,#00f5b0);box-shadow:0 0 25px #00f5b0;transition:width .25s linear}
+#racePercent{font-size:clamp(26px,7vw,48px);font-weight:800}
+#raceHint{font-size:clamp(14px,3.4vw,21px);color:#d0dce7}
+@media(prefers-reduced-motion:reduce){#raceSignal.finished.flash{animation:none}}
+
+/* V1.3: pantalla de carrera dedicada, sin controles secundarios */
+#raceOverlay{max-width:none;width:100vw;height:100dvh;min-height:100vh;overflow:hidden;gap:clamp(10px,2.5vh,24px);padding:clamp(16px,5vw,40px);transition:none}
+#raceOverlay.phase-running{justify-content:center;gap:clamp(18px,5vh,48px)}
+#raceOverlay.phase-running #raceBrand,#raceOverlay.phase-running #raceSignal,#raceOverlay.phase-running #raceHint,#raceOverlay.phase-running #raceClockLabel{display:none!important}
+#raceOverlay.phase-running #raceClock{font-size:clamp(26px,7vw,45px);font-weight:700;color:#d6e6f4}
+#raceOverlay.phase-running #raceDistance{font-size:clamp(30px,9vw,66px)}
+#raceOverlay.phase-running #raceTrack{height:clamp(78px,18vh,165px);border:5px solid #b8ecff;box-shadow:0 0 30px #19ffe6aa, inset 0 0 25px #041923}
+#raceOverlay.phase-running #raceFill{background:linear-gradient(90deg,#00a58d,#00ffbf 65%,#d5ff6a);box-shadow:0 0 38px #18ffbd}
+#raceOverlay.phase-running #racePercent{font-size:clamp(48px,15vw,110px);color:#efffff;text-shadow:0 0 22px #22f5ce}
+#raceOverlay.phase-green{animation:goScreenFlash .22s steps(1,end) 8}
+#raceOverlay.phase-green #raceSignal{color:#eafff2;text-shadow:0 0 25px #00ff55,0 0 85px #00ff55;font-size:clamp(70px,19vw,160px)}
+@keyframes goScreenFlash{0%,100%{background:#00c83a;box-shadow:inset 0 0 140px #4aff6b}50%{background:#003e1c;box-shadow:inset 0 0 70px #00ff55}}
+#raceOverlay.phase-finished{animation:finishScreenFlash .38s steps(1,end) 10;justify-content:center}
+#raceOverlay.phase-finished #raceBrand,#raceOverlay.phase-finished #raceClockLabel,#raceOverlay.phase-finished #raceClock,#raceOverlay.phase-finished #raceDistance,#raceOverlay.phase-finished #raceTrack,#raceOverlay.phase-finished #racePercent,#raceOverlay.phase-finished #raceHint{display:none!important}
+#raceOverlay.phase-finished #raceSignal{font-size:clamp(48px,13vw,120px);line-height:1.1;color:#fff;background:transparent;border:0;box-shadow:none;text-shadow:0 0 22px #fff,0 0 70px #ff001a;padding:12px}
+@keyframes finishScreenFlash{0%,100%{background:#ff1028;box-shadow:inset 0 0 110px #ff6b7c}50%{background:#320008;box-shadow:inset 0 0 65px #ff1525}}
+#reviewChart{display:block;width:100%;height:auto;max-height:320px;background:#0b1722;border:1px solid #3c5669;border-radius:12px;margin:12px 0}
+@media(prefers-reduced-motion:reduce){#raceOverlay.phase-finished,#raceOverlay.phase-green{animation:none}#raceOverlay.phase-finished{background:#df1025}#raceOverlay.phase-green{background:#087b3c}}
+
+/* V1.4: misma pantalla para semáforo, espera y carrera. */
+#raceOverlay{justify-content:center!important;gap:clamp(15px,4vh,38px)!important}
+#raceOverlay #raceBrand,#raceOverlay #raceClockLabel,#raceOverlay #raceHint,#raceOverlay #racePercent{display:none!important}
+#raceOverlay #raceClock{font-size:clamp(34px,8vw,62px)!important;color:#e9f8ff!important;font-weight:700!important}
+#raceOverlay #raceDistance{font-size:clamp(28px,7vw,56px)!important}
+#raceOverlay #raceTrack{height:clamp(76px,17vh,150px)!important;border:5px solid #9fece8!important;box-shadow:0 0 30px #11eac977!important}
+#raceOverlay #raceFill{background:linear-gradient(90deg,#00a58d,#00ffc1 65%,#d7ff76)!important;box-shadow:0 0 36px #00ffb0!important}
+#raceLights{display:flex;gap:clamp(14px,4vw,32px);justify-content:center;align-items:center}
+#raceLights .light{width:clamp(54px,11vw,88px);height:clamp(54px,11vw,88px);border-width:4px}
+#raceOverlay.phase-green #raceSignal{position:absolute;top:38%;left:0;width:100%;z-index:2;pointer-events:none}
+#raceOverlay #raceSignal:not(.go):not(.finished){display:none!important}
+#raceOverlay .go-ended{display:none!important}
+#raceOverlay.phase-finished #raceLights{display:none!important}
+#raceOverlay.phase-finished #raceSignal{display:block!important;position:static;font-size:clamp(42px,11vw,100px)}
+#raceOverlay.phase-finished #raceClock,#raceOverlay.phase-finished #raceDistance,#raceOverlay.phase-finished #raceTrack{display:none!important}
+@media(max-width:500px){#raceOverlay{padding:16px!important}#raceOverlay #raceTrack{height:18vh!important}}
+
+.partials-panel{background:#0a1c2d;border:1px solid #33556d;border-radius:12px;padding:14px;margin:12px 0;color:#e8f6ff}
+.partials-panel table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.partials-panel th,.partials-panel td{padding:9px 6px;text-align:right;border-bottom:1px solid #25445a}
+.partials-panel th:first-child,.partials-panel td:first-child{text-align:left}
+.partials-panel caption{text-align:left;padding:8px 0;color:#8fdac9}
+</style><style>
+/* RS Competicion original identity — presentation layer only */
+:root{color-scheme:dark;background:#080c14;color:#f3f5f9}
+html{min-height:100%;background:#080c14}
+body{max-width:1020px;padding:16px clamp(10px,2.5vw,26px) 90px;background:transparent;position:relative;isolation:isolate;color:#f5f6fa}
+body::before{content:"";position:fixed;inset:0;z-index:-2;background:linear-gradient(115deg,rgba(4,9,18,.86),rgba(7,13,23,.78)),url("rs_fondo.webp") center center / cover no-repeat}
+body::after{content:"";position:fixed;inset:0;z-index:-1;background:radial-gradient(ellipse at 45% 20%,transparent 10%,rgba(3,7,15,.55) 100%);pointer-events:none}
+header{position:relative;overflow:hidden;min-height:170px;border:1px solid #b32742;border-radius:17px;padding:22px clamp(16px,3vw,30px);background:linear-gradient(105deg,rgba(12,12,21,.85),rgba(69,8,24,.70)),url("rs_portada.webp") center 48% / cover no-repeat;box-shadow:0 0 0 1px #0e1724,0 10px 28px #0009;margin-bottom:20px}
+header::before{content:"";position:absolute;inset:0;border-left:4px solid #ef344c;pointer-events:none}
+header .brand{color:#ff5368;letter-spacing:.11em;font-weight:900;font-size:clamp(.73rem,2vw,.9rem);text-shadow:0 2px 5px #000}
+header h1{display:inline-block;font-size:clamp(1.65rem,4.3vw,2.5rem);font-weight:950;letter-spacing:.015em;text-shadow:0 3px 8px #000;margin:12px 0}
+header small{display:block;color:#e2e5ee;font-weight:550;text-shadow:0 2px 5px #000}
+.card{background:linear-gradient(135deg,rgba(10,16,29,.92),rgba(13,22,38,.85));border:1px solid #384b65;border-top-color:#61718a;box-shadow:0 8px 26px #0006,inset 0 1px #ffffff0c;backdrop-filter:blur(7px);border-radius:14px;padding:clamp(14px,2.5vw,22px);margin:14px 0}
+.card h2{font-size:1.2rem;color:#fff;font-weight:850;padding-left:12px;border-left:4px solid #f1334d;text-transform:none}
+button{background:linear-gradient(180deg,#29374c,#172335);border:1px solid #566981;color:#fff;font-weight:650;box-shadow:inset 0 1px #ffffff14}
+button.primary{background:linear-gradient(180deg,#c91b3d,#92152c);border-color:#fa5065;color:#fff;box-shadow:0 0 12px #b5153033}
+button:hover:not(:disabled){filter:brightness(1.15)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #ff5368}
+select,input,textarea{background:rgba(12,19,31,.95);border-color:#63758c;color:#fff}
+label{color:#e0e7f0}
+.metric,details,.partials-panel{background:rgba(9,18,32,.92);border:1px solid #334963}
+.pill{background:#5a1526;color:#ffe4e8;border:1px solid #b52c43}
+.status{background:rgba(22,35,52,.9)}
+canvas,#reviewChart{background:#0a1423;border:1px solid #51647b}
+#raceOverlay{background:radial-gradient(ellipse at center,#17263a,#080d17 76%)}
+#raceOverlay.phase-green{animation:goScreenFlash .22s steps(1,end) 8}
+#raceOverlay.phase-finished{animation:finishScreenFlash .38s steps(1,end) 10}
+@media(max-width:550px){body{padding:8px 9px 65px}header{min-height:145px;padding:17px}.card{padding:14px}.row{gap:8px}}
+</style></head><body><header><div class="brand">MOTOPERFORMANCE IA · BY RS COMPETICIÓN</div><h1>GPS Racing Labs <span class="pill">Beta 2.3</span></h1><small>Pruebas de aceleración en pista cerrada · Guardado local</small></header>
+<section class="card"><h2>Proyecto</h2><div class="row"><div><label for="project">Proyecto activo</label><select id="project"></select></div><button class="compact" id="newProject">+ Nuevo</button></div><div class="row"><span id="count">0 / 10 tiradas aceptadas</span></div><p class="muted">Las cinco tiradas simuladas se cargan exclusivamente al pulsar «Simular tirada (DEMO)». Después podés compararlas desde Historial y comparación.</p></section>
+<section id="setupSection" class="card"><h2>Preparar tirada · Beta de campo 2.3</h2><p class="muted">RS GPS Quality Engine: muestra frecuencia de muestras, precisión y rechazos. Los intervalos GPS largos invalidan el cálculo de parciales atravesados. No equivale a cronometraje homologado.</p><div class="grid"><div><label for="distance">Distancia</label><select id="distance"><option value="200">200 m</option><option value="400" selected>400 m</option><option value="600">600 m</option><option value="800">800 m</option><option value="1000">1000 m</option></select></div></div><div class="row"><button id="gpsBtn">Activar GPS</button><button id="demoBtn">Simular tirada (DEMO)</button></div><div id="gpsStatus" class="status warn" role="status">GPS sin activar. Para medir necesitás HTTPS, permiso de ubicación y pantalla encendida.</div><div id="gpsDiagnostics" class="status warn" role="status">Diagnóstico: esperando datos GPS.</div><div class="hidden" aria-hidden="true"><span id="greenClock">0,00 s</span><span id="moveClock">—</span><span id="speed">—</span><span id="covered">0,0 m</span></div><div class="row"><button class="primary" id="startBtn" disabled>Iniciar semáforo</button><button id="stopBtn" disabled>Finalizar / cancelar</button></div><div id="notice" class="status">La tirada comienza al superar 4 km/h con lecturas GPS consecutivas válidas. El tiempo desde el verde queda registrado.</div></section>
+<section id="review" class="card hidden"><h2>Resultado de la tirada</h2><p>Analizá los valores. Si te parecen correctos, guardala; de lo contrario, volvé a realizar la prueba.</p><div id="reviewStats"></div><h3>Curva de velocidad de esta tirada</h3><canvas id="reviewChart" width="760" height="310" aria-label="Curva de velocidad de la tirada recién finalizada"></canvas><div class="row"><button id="reviewPartialsBtn" type="button">Parciales</button></div><div id="reviewPartialsPanel" class="hidden partials-panel"></div><div id="reviewWarnings" class="status warn"></div><label for="runNote">Observaciones de la tirada</label><input id="runNote" placeholder="Ej.: patinó, largada tardía, viento..."><div class="row"><button class="primary" id="saveBtn">A — Guardar tirada</button><button id="retryBtn">B — Volver a probar</button></div></section>
+<section id="historySection" class="card"><h2>Historial y comparación</h2><p class="muted">Elegí hasta tres tiradas buenas. Cada una se grafica desde el inicio de movimiento detectado.</p><div id="runList"></div><div id="historyPartialsPanel" class="hidden partials-panel"></div><div class="row"><button id="compareBtn">Comparar seleccionadas</button><button id="clearSelect">Quitar selección</button></div><div class="row"><label for="graphType">Gráfico</label><select id="graphType"><option value="speed">Velocidad vs distancia</option><option value="time">Velocidad vs tiempo GPS</option><option value="accel">Aceleración estimada vs tiempo</option></select></div><canvas id="chart" width="760" height="300" aria-label="Comparación de curvas"></canvas><div id="comparison" class="muted"></div><details><summary>ℹ️ ¿Qué significa la demora de salida?</summary><p>Se calcula desde el verde hasta la primera detección válida de velocidad mayor a 4 km/h. Puede incluir demora del piloto, latencia GPS o pérdida de señal. No permite diagnosticar por sí sola patinamiento ni reacción humana exacta. La curva se inicia en el movimiento detectado; el tiempo desde el verde se conserva como dato adicional.</p></details></section>
+<section id="settingsSection" class="card"><details><summary>⚙ Configuración · Copias de seguridad</summary><p class="muted">Guardá una copia antes de cambiar de celular o limpiar los datos de Chrome.</p><div class="row"><button id="exportBtn">Exportar respaldo</button><button id="importBtn">Importar respaldo</button><input id="importFile" class="hidden" type="file" accept="application/json,.json"></div></details></section><p class="footer">Beta de campo 2.3: no apta para cronometraje oficial. Requiere HTTPS, GPS y revisión posterior. La velocidad GPS y los tiempos pueden tener latencia y errores. No usar para decidir maniobras de conducción. La geolocalización del navegador puede ser lenta, inexacta o detenerse en segundo plano. Mantené la pantalla activa y el teléfono sujeto; no lo manipules mientras conducís. Datos almacenados en este navegador, con exportación de respaldo manual. No se transmiten posiciones a un servidor desde esta aplicación.</p>
+<section id="raceOverlay" class="hidden phase-countdown" role="status" aria-live="off"><div id="raceBrand">RS COMPETICIÓN · GPS RACING LABS</div><div id="raceLights" class="lights" aria-label="Semáforo de tres luces"><div id="red" class="light"></div><div id="yellow" class="light"></div><div id="green" class="light"></div></div><div id="raceSignal" aria-live="polite">PREPARADOS</div><div id="raceClockLabel">CRONÓMETRO DESDE EL VERDE</div><div id="raceClock">00:00.00</div><div id="raceDistance" hidden>0 / 400 m</div><div id="raceTrack" role="progressbar" aria-label="Avance de la tirada" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="raceFill"></div></div><div id="racePercent" hidden>0 %</div><div id="raceHint">Esperando la señal de largada</div></section><script>
+'use strict';
+/* RS GPS Labs beta: no backend, all run data remains on device. */
+const $=id=>document.getElementById(id), KEY='rs_gps_beta_v1', MAX=10, SPLIT_COUNT=10, THRESHOLD=4/3.6;
+const now=()=>performance.now(), fmt=(v,n=2)=>Number.isFinite(v)?v.toFixed(n).replace('.',','):'—';
+const uid=()=>typeof crypto!=='undefined'&&crypto.randomUUID?crypto.randomUUID():`${Date.now()}-${Math.random().toString(36).slice(2)}`;
+function haversine(a,b){const rad=Math.PI/180,R=6371000,p1=a.lat*rad,p2=b.lat*rad,dp=(b.lat-a.lat)*rad,dl=(b.lon-a.lon)*rad,q=Math.sin(dp/2)**2+Math.cos(p1)*Math.cos(p2)*Math.sin(dl/2)**2;return 2*R*Math.atan2(Math.sqrt(q),Math.sqrt(1-q));}
+function safeStore(data){try{localStorage.setItem(KEY,JSON.stringify(data));return true}catch(e){alert('No se pudo guardar en el navegador. Exportá una copia y liberá espacio.');return false}}
+function load(){try{const v=JSON.parse(localStorage.getItem(KEY));if(v&&Array.isArray(v.projects))return v}catch{}return {version:1,active:null,projects:[]}}
+let db=load();if(!db.projects.length){const id=uid();db.projects.push({id,name:'Proyecto 1',runs:[]});db.active=id;safeStore(db)}
+let watch=null,latest=null,fixHistory=[],phase='idle',greenAt=null,motionAt=null,dist=0,lastPoint=null,samples=[],warnings=[],pending=null,thresholdCount=0,selected=[],countdown=[],timer=null,startedAt=null,partDist=[],partTimes=[],prevSpeed=null,stopCause='';
+const project=()=>db.projects.find(p=>p.id===db.active)||db.projects[0];
+let finishTimeout=null, demoInterval=null, demoToken=0;
+// Field reliability layer: diagnostics only; never fabricate missing fixes.
+const FIELD_MAX_ACCURACY_M=15, FIELD_MAX_FIX_AGE_MS=2500, FIELD_LOSS_ABORT_MS=5000;
+let lastAcceptedFixAt=0, fieldWakeLock=null, fieldGapCount=0, fieldRejectCount=0, fieldHz=0, fieldLastDt=null, fieldUncertainSplits=0;
+async function keepScreenAwake(){
+ try{if('wakeLock' in navigator && !fieldWakeLock){fieldWakeLock=await navigator.wakeLock.request('screen');}}
+ catch(e){status('GPS activo, pero Android no permitió mantener la pantalla encendida.','warn')}
+}
+async function releaseScreenAwake(){if(fieldWakeLock){try{await fieldWakeLock.release()}catch(e){}fieldWakeLock=null}}
+document.addEventListener('visibilitychange',()=>{
+ if(document.hidden && (phase==='green'||phase==='running')) warnings.push('La aplicación pasó a segundo plano durante la prueba.');
+ else if(!document.hidden && ['countdown','green','running'].includes(phase))keepScreenAwake();
+});
+
+function showRace(){ $('raceOverlay').className='phase-countdown';$('raceSignal').className='';$('raceSignal').textContent='';$('red').className='light red';$('yellow').className='light';$('green').className='light';$('raceFill').style.width='0%';$('raceTrack').setAttribute('aria-valuenow','0');$('racePercent').textContent='0 %';$('raceDistance').textContent=`0 / ${$('distance').value} m`; $('raceClock').textContent='00:00.00';$('raceClockLabel').textContent='CRONÓMETRO DESDE EL VERDE';$('raceHint').textContent='Esperando la señal de largada';}
+function hideRace(){if(finishTimeout!==null){clearTimeout(finishTimeout);finishTimeout=null;}$('raceOverlay').classList.add('hidden');}
+function updateRace(){if($('raceOverlay').classList.contains('hidden'))return;const base=motionAt??greenAt;const elapsed=base===null?0:Math.max(0,(Date.now()-base)/1000);$('raceClock').textContent='00:'+fmt(elapsed).padStart(5,'0');const target=Number($('distance').value);const pct=Math.min(100,Math.max(0,dist/target*100));$('raceFill').style.width=pct+'%';$('raceTrack').setAttribute('aria-valuenow',String(Math.round(pct)));$('raceDistance').textContent=`${fmt(dist,0)} / ${target} m`;$('racePercent').textContent=`${fmt(pct,0)} %`;}
+function finishRaceDisplay(){if(pending?.kind!=='DEMO')updateRace();$('raceFill').style.width=Math.min(100,Math.max(0,dist/Number($('distance').value)*100))+'%';$('raceOverlay').className='phase-finished';$('raceSignal').textContent='FIN DE LA TIRADA';$('raceSignal').className='';$('raceHint').textContent='Prueba finalizada · Revisá los resultados al detenerte';finishTimeout=setTimeout(()=>{finishTimeout=null;$('raceOverlay').classList.add('hidden');showReview();},3900);}
+
+function setNotice(s,kind=''){ $('notice').textContent=s;$('notice').className='status '+(kind||''); }
+function status(s,kind='warn'){$('gpsStatus').textContent=s;$('gpsStatus').className='status '+kind}
+function persist(){if(!safeStore(db))return false;renderProjects();renderRuns();return true}
+function renderProjects(){const p=$('project');p.innerHTML='';for(const x of db.projects){const o=document.createElement('option');o.value=x.id;o.textContent=x.name;p.append(o)}p.value=project().id;$('count').textContent=`${project().runs.length} / ${MAX} tiradas aceptadas`}
+function quality(fix){return fix&&Number.isFinite(fix.accuracy)&&fix.accuracy<=FIELD_MAX_ACCURACY_M&&Number.isFinite(fix.lat)&&Number.isFinite(fix.lon)&&Number.isFinite(fix.speed)&&fix.speed>=0}
+function readyForField(){
+ const good=fixHistory.filter(f=>quality(f)&&Date.now()-f.t<=7000);
+ return good.length>=3 && !!latest && quality(latest) && Date.now()-latest.t<=FIELD_MAX_FIX_AGE_MS;
+}
+
+function onGPS(pos){const c=pos.coords,f={lat:c.latitude,lon:c.longitude,accuracy:c.accuracy,speed:c.speed,t:pos.timestamp};// Ignore duplicate/out-of-order and stale samples. They cannot measure elapsed distance.
+ if(latest && f.t<=latest.t){fieldRejectCount++;return}
+ if(Date.now()-f.t>FIELD_MAX_FIX_AGE_MS){fieldRejectCount++;if(phase==='green'||phase==='running')warnings.push('Lectura GPS atrasada descartada.');return}
+ latest=f;fixHistory.push(f);if(fixHistory.length>10)fixHistory.shift();const good=quality(f);if(fixHistory.length>=2){const prior=fixHistory[fixHistory.length-2], deltaMs=f.t-prior.t;if(deltaMs>0){fieldLastDt=deltaMs;const intervals=fixHistory.slice(1).map((v,i)=>v.t-fixHistory[i].t).filter(v=>v>0);fieldHz=intervals.length?1000/(intervals.reduce((a,b)=>a+b,0)/intervals.length):0;}}$('gpsDiagnostics').textContent=`Señal ${good?'aceptable':'no apta'} · ±${fmt(f.accuracy,1)} m · ${fmt(fieldHz,2)} Hz aprox. · intervalo ${fieldLastDt===null?'—':fmt(fieldLastDt/1000,2)+' s'} · rechazadas ${fieldRejectCount}`;if(good)lastAcceptedFixAt=Date.now();else fieldRejectCount++;status(`GPS: ${good?'señal utilizable':'precisión insuficiente'} · ±${fmt(f.accuracy,0)} m · ${Number.isFinite(f.speed)?fmt(f.speed*3.6,1)+' km/h':'velocidad no disponible'} · ${new Date(f.t).toLocaleTimeString('es-AR')}`,good?'ok':'warn');$('speed').textContent=Number.isFinite(f.speed)?`${fmt(f.speed*3.6,1)} km/h`:'—';if(phase!=='green'&&phase!=='running')return;
+ if(!good){warnings.push('Hubo lecturas de precisión insuficiente o sin velocidad.');return}
+ if(!lastPoint){lastPoint=f;return}
+ const dt=(f.t-lastPoint.t)/1000;if(dt<=0)return;
+ if(dt>1.5){fieldGapCount++;warnings.push(`Intervalo GPS prolongado: ${fmt(dt,1)} s; parciales cruzados en ese intervalo no se estiman.`);}
+ const delta=haversine(lastPoint,f);const maxPlausible=Math.max(7,((f.speed+lastPoint.speed)/2)*dt*2+Math.max(f.accuracy,lastPoint.accuracy)*.5);
+ if(delta>maxPlausible){warnings.push('Salto de posición GPS descartado.');lastPoint=f;return}
+ if(phase==='green'){
+   if(f.speed>THRESHOLD && lastPoint.speed>THRESHOLD){thresholdCount++;if(thresholdCount>=1){motionAt=f.t;phase='running';dist=0;samples=[{t:0,d:0,v:f.speed*3.6,accuracy:f.accuracy}];partTimes=[];lastPoint=f;setNotice(`Movimiento detectado. Demora desde verde: ${fmt((motionAt-greenAt)/1000)} s.`,'ok');$('raceOverlay').className='phase-running';$('raceSignal').textContent='';$('raceSignal').className='';$('raceClockLabel').textContent='TIEMPO DE MOVIMIENTO GPS';$('raceHint').textContent=`Demora de salida estimada: ${fmt((motionAt-greenAt)/1000)} s`;return}}
+   else thresholdCount=0;
+   lastPoint=f;return;
+ }
+ if(phase==='running'){
+   const prevD=dist;dist+=delta;const t=(f.t-motionAt)/1000;
+   samples.push({t,d:dist,v:f.speed*3.6,accuracy:f.accuracy});$('covered').textContent=`${fmt(dist,1)} m`;updateRace();
+   for(const target of partDist){if(!partTimes.some(p=>p.distance===target)&&prevD<target&&dist>=target){if(dt>1.5){fieldUncertainSplits++;continue;}const a=samples[samples.length-2],b=samples[samples.length-1],fraction=(target-prevD)/(dist-prevD||1);partTimes.push({distance:target,time:a.t+(b.t-a.t)*fraction})}}
+   lastPoint=f;
+   if(dist>=Number($('distance').value))finish('distancia');
+ }
+}
+function gpsError(e){status('GPS no disponible: '+(e&&e.message||'error de ubicación'),'bad');if(phase==='green'||phase==='running')warnings.push('Se produjo un error de geolocalización.')}
+function activateGPS(){if(db.active===DEMO_PROJECT_ID){alert("Elegí o creá un proyecto real antes de activar el GPS. Las tiradas DEMO se mantienen separadas.");return;}if(!navigator.geolocation){status('Este navegador no dispone de geolocalización.','bad');return}if(!window.isSecureContext&&location.hostname!=='localhost'){status('GPS requiere HTTPS o localhost. Abrí la app en una dirección HTTPS.','bad');return}if(watch!==null)navigator.geolocation.clearWatch(watch);watch=navigator.geolocation.watchPosition(onGPS,gpsError,{enableHighAccuracy:true,maximumAge:0,timeout:12000});status('Solicitando ubicación de alta precisión...');$('startBtn').disabled=false}
+function reset(){releaseScreenAwake();demoToken++;if(demoInterval!==null){clearInterval(demoInterval);demoInterval=null;}countdown.forEach(clearTimeout);countdown=[];phase='idle';greenAt=null;motionAt=null;dist=0;lastPoint=null;samples=[];warnings=[];thresholdCount=0;partDist=[];partTimes=[];pending=null;hideRace();$('review').classList.add('hidden');$('red').className=$('yellow').className=$('green').className='light';$('greenClock').textContent='0,00 s';$('moveClock').textContent='—';$('covered').textContent='0,0 m';$('startBtn').disabled=watch===null;$('stopBtn').disabled=true;setNotice('Preparado para una nueva tirada.');}
+function green(){phase='green';greenAt=Date.now();lastPoint=null;thresholdCount=0;$('red').className=$('yellow').className='light';$('green').className='light green';setNotice('¡VERDE! Esperando movimiento GPS mayor a 4 km/h...','ok');$('raceOverlay').className='phase-green';$('raceSignal').textContent='¡GOOO!';$('raceSignal').className='go';setTimeout(()=>{if(phase==='green'){$('raceOverlay').className='phase-running';$('raceSignal').className='go-ended';}},1800);$('raceHint').textContent='Esperando movimiento GPS superior a 4 km/h';updateRace()}
+function start(){if(watch===null){status('Activá GPS antes de comenzar.');return}if(!readyForField()){status('Esperá 3 lecturas GPS válidas, recientes y con precisión ≤15 m. Si el teléfono no las consigue, no inicies la prueba.');return}reset();fieldGapCount=0;fieldRejectCount=0;fieldUncertainSplits=0;keepScreenAwake();showRace();phase='countdown';startedAt=Date.now();const distance=Number($('distance').value);partDist=Array.from({length:SPLIT_COUNT},(_,i)=>distance*(i+1)/SPLIT_COUNT);$('startBtn').disabled=true;$('stopBtn').disabled=false;$('red').className='light red';setNotice('Preparados...');countdown.push(setTimeout(()=>{$('red').className='light';$('yellow').className='light yellow';setNotice('Atención...');$('raceSignal').textContent=''},1300));countdown.push(setTimeout(green,2600))}
+function finish(reason){if(!['green','running'].includes(phase))return;releaseScreenAwake();stopCause=reason;phase='review';$('startBtn').disabled=watch===null;$('stopBtn').disabled=true;const end=Date.now(),moved=motionAt!==null,delay=moved?(motionAt-greenAt)/1000:null,greenTime=(end-greenAt)/1000,motionTime=moved?(end-motionAt)/1000:null;
+ if(!moved)warnings.push('No se detectó movimiento válido.');if(reason!=='distancia')warnings.push('Prueba finalizada antes de alcanzar la distancia.');if(samples.length<5)warnings.push('Pocas muestras GPS: comparación poco confiable.');if(fieldGapCount)warnings.push(`${fieldGapCount} intervalo(s) GPS mayor(es) a 1,5 s.`);if(fieldRejectCount)warnings.push(`${fieldRejectCount} lectura(s) GPS descartada(s).`);if(fieldUncertainSplits)warnings.push(`${fieldUncertainSplits} parcial(es) sin tiempo confiable por intervalo GPS prolongado.`);
+ const maxGap=samples.slice(1).reduce((m,s,i)=>Math.max(m,s.t-samples[i].t),0);if(maxGap>2)warnings.push(`Intervalos de muestreo de hasta ${fmt(maxGap,1)} s.`);
+ if(reason==='distancia' && moved && samples.length>1){const last=samples[samples.length-1],prev=samples[samples.length-2];if(prev.d<Number($('distance').value)&&last.d>=Number($('distance').value)){const f=(Number($('distance').value)-prev.d)/(last.d-prev.d||1);const crossing=prev.t+(last.t-prev.t)*f;const idx=partTimes.findIndex(p=>Math.abs(p.distance-Number($('distance').value))<1e-6);if(idx<0)partTimes.push({distance:Number($('distance').value),time:crossing});}}
+ const maxSpeed=samples.length?Math.max(...samples.map(s=>s.v)):0;pending={id:uid(),created:new Date().toISOString(),distanceTarget:Number($('distance').value),distanceActual:dist,reason,greenTime,motionTime:(reason==='distancia'&&partTimes.length===SPLIT_COUNT?partTimes[SPLIT_COUNT-1].time:motionTime),delay,maxSpeed,samples:[...samples],partials:[...partTimes].sort((a,b)=>a.distance-b.distance),warnings:[...new Set(warnings)],kind:'REAL',note:'',gpsQuality:{meanHz:fieldHz,lastIntervalMs:fieldLastDt,rejected:fieldRejectCount,gaps:fieldGapCount,uncertainSplits:fieldUncertainSplits,accuracyLimitM:FIELD_MAX_ACCURACY_M}};
+ finishRaceDisplay();}
+function showReview(){const r=pending;if(!r)return;$('review').classList.remove('hidden');$('reviewPartialsPanel').classList.add('hidden');$('reviewStats').innerHTML=`<div class="grid"><div class="metric"><span>Tiempo GPS</span><b>${fmt(r.motionTime)} s</b></div><div class="metric"><span>Desde verde</span><b>${fmt(r.greenTime)} s</b></div><div class="metric"><span>Demora de salida</span><b>${fmt(r.delay)} s</b></div><div class="metric"><span>Velocidad máxima</span><b>${fmt(r.maxSpeed,1)} km/h</b></div></div><p>Distancia: ${fmt(r.distanceActual,1)} / ${r.distanceTarget} m</p>`;$('reviewWarnings').textContent=r.warnings.length?'Advertencias: '+r.warnings.join(' '):'Sin advertencias detectadas. Revisá igualmente la calidad del GPS y los resultados.';$('runNote').value='';drawReview(r);$('review').scrollIntoView({behavior:'smooth',block:'start'})}
+function speedAtDistance(r,d){
+ const pts=(r.samples||[]).filter(p=>Number.isFinite(p.d)&&Number.isFinite(p.v)).slice().sort((a,b)=>a.d-b.d);
+ if(!pts.length)return null;
+ if(d<pts[0].d-1e-6||d>pts[pts.length-1].d+1e-6)return null;
+ if(d<=pts[0].d)return pts[0].v;
+ for(let i=1;i<pts.length;i++){
+  if(pts[i].d>=d){const a=pts[i-1],b=pts[i],fraction=(d-a.d)/(b.d-a.d||1);return a.v+(b.v-a.v)*fraction;}
+ }
+ return pts[pts.length-1].v;
+}
+function partialEntries(r){
+ return (r.partials||[]).filter(p=>Number.isFinite(p.distance)&&Number.isFinite(p.time))
+  .slice().sort((a,b)=>a.distance-b.distance).map((p,i,a)=>({
+   distance:p.distance,time:p.time,segment:p.time-(i?a[i-1].time:0),
+   speed:Number.isFinite(p.speed)?p.speed:speedAtDistance(r,p.distance),
+   finish:Math.abs(p.distance-r.distanceTarget)<.001
+  }));
+}
+function splitMarkup(r){
+ const entries=partialEntries(r);
+ const rows=entries.map((p,i)=>`<tr><td>${p.finish?'Llegada':`Parcial ${i+1}`}</td><td>${fmt(p.distance,1)} m</td><td>${fmt(p.time)} s</td><td>${fmt(p.segment)} s</td><td>${p.speed===null?'Sin dato':fmt(p.speed,1)+' km/h'}</td></tr>`).join('');
+ return `<table><caption>${entries.length} controles registrados · ${r.kind==='DEMO'?'DEMO':'GPS'} · distancia ${fmt(r.distanceTarget,0)} m</caption><thead><tr><th>Control</th><th>Distancia</th><th>Acumulado</th><th>Tramo</th><th>Velocidad</th></tr></thead><tbody>${rows||'<tr><td colspan="5">No hay parciales disponibles.</td></tr>'}</tbody></table>${entries.length!==SPLIT_COUNT?'<p>Registro incompleto o creado en una versión anterior. No se inventan controles faltantes.</p>':''}`;
+}
+function toggleSplitPanel(id,r){const panel=$(id);const opening=panel.classList.contains('hidden');if(opening){panel.innerHTML=splitMarkup(r);panel.classList.remove('hidden');}else panel.classList.add('hidden');}
+function drawReview(r){
+ const c=$('reviewChart'),ctx=c.getContext('2d'),w=c.width,h=c.height,pad=58;
+ ctx.clearRect(0,0,w,h);ctx.fillStyle='#0b1722';ctx.fillRect(0,0,w,h);
+ const pts=r.samples.filter(p=>Number.isFinite(p.d)&&Number.isFinite(p.v));
+ const maxX=Math.max(r.distanceTarget,1),maxY=Math.max(20,...pts.map(p=>p.v))*1.08;
+ ctx.font='15px system-ui';ctx.lineWidth=1;ctx.strokeStyle='#35536a';ctx.fillStyle='#cbdce9';
+ for(let i=0;i<=4;i++){const y=20+i*(h-65)/4;ctx.beginPath();ctx.moveTo(pad,y);ctx.lineTo(w-15,y);ctx.stroke();ctx.fillText(fmt(maxY*(1-i/4),0),5,y+5);const x=pad+i*(w-pad-15)/4;ctx.fillText(fmt(maxX*i/4,0),x-9,h-12)}
+ ctx.strokeStyle='#37f5bc';ctx.lineWidth=4;ctx.beginPath();pts.forEach((p,i)=>{const x=pad+Math.min(maxX,p.d)/maxX*(w-pad-15),y=20+(maxY-p.v)/maxY*(h-65);if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)});ctx.stroke();
+ // Nueve parciales y llegada, siempre visibles sobre la curva.
+ ctx.fillStyle='#fff';ctx.strokeStyle='#37f5bc';ctx.lineWidth=2;
+ partialEntries(r).forEach((p,i)=>{if(p.speed===null)return;const x=pad+Math.min(maxX,p.distance)/maxX*(w-pad-15),y=20+(maxY-p.speed)/maxY*(h-65);ctx.beginPath();ctx.arc(x,y,5,0,Math.PI*2);ctx.fill();ctx.stroke();});
+ ctx.fillStyle='#e4f6ff';ctx.fillText('km/h',5,16);ctx.fillText('metros',w-76,h-12);
+}
+function save(){if(!pending)return;if(db.active===DEMO_PROJECT_ID&&pending.kind!=="DEMO"){alert("Las mediciones reales deben guardarse en un proyecto real.");return;}const p=project();if(p.runs.length>=MAX){if(confirm('Llegaste a 10 tiradas. ¿Querés crear otro proyecto para seguir guardando? Cancelar permite elegir una tirada del historial para borrar.')){$('newProject').click()}else{$('historySection').scrollIntoView({behavior:'smooth'})}return}pending.note=$('runNote').value.trim();p.runs.push(pending);if(persist()){pending=null;$('review').classList.add('hidden');setNotice('Tirada guardada. Abrí Historial y comparación para ver las curvas.','ok');if(db.active===DEMO_PROJECT_ID)$('historySection').scrollIntoView({behavior:'smooth'})}}
+function demo(){
+ if(['countdown','green','running'].includes(phase)){alert('Finalizá la prueba activa antes de crear una DEMO.');return;}
+ reset();
+ // Entrar en DEMO carga automáticamente las cinco tiradas comparables.
+ // Nunca sobrescribe proyectos GPS reales ni exige otro botón.
+ ensureFiveDemos(false);
+ const token=demoToken, target=Number($('distance').value), delay=1.5, duration=14;
+ const count=SPLIT_COUNT;
+ const points=Array.from({length:71},(_,i)=>{const t=i*duration/70;const d=target*Math.pow(t/duration,1.45);const v=3.6*(target*1.45/duration)*Math.pow(Math.max(t,0.01)/duration,.45);return {t,d,v,accuracy:3};});
+ const partials=Array.from({length:count},(_,i)=>{const d=target*(i+1)/count;return {distance:d,time:duration*Math.pow(d/target,1/1.45)};});
+ const later=(callback,ms)=>countdown.push(setTimeout(()=>{if(demoToken===token)callback();},ms));
+ showRace();phase='countdown';$('raceHint').textContent='SIMULACIÓN · No se utiliza el GPS';
+ $('raceSignal').textContent='';$('raceSignal').className='';$('red').className='light red';
+ later(()=>{$('red').className='light';$('yellow').className='light yellow';},1300);
+ later(()=>{
+   phase='green';greenAt=Date.now();$('red').className='light';$('yellow').className='light';$('green').className='light green';$('raceOverlay').className='phase-green';$('raceSignal').textContent='¡GOOO!';$('raceSignal').className='go';
+   $('raceHint').textContent='Verde · esperando movimiento simulado';later(()=>{if(phase==='green'){$('raceOverlay').className='phase-running';$('raceSignal').className='go-ended';}},1800);
+   demoInterval=setInterval(()=>{
+     if(demoToken!==token||!['green','running'].includes(phase)){clearInterval(demoInterval);demoInterval=null;return;}
+     const sinceGreen=(Date.now()-greenAt)/1000;
+     if(sinceGreen<delay){dist=0;updateRace();return;}
+     if(motionAt===null){motionAt=greenAt+delay*1000;phase='running';$('raceOverlay').className='phase-running';$('raceSignal').textContent='';$('raceSignal').className='';$('raceClockLabel').textContent='CRONÓMETRO DESDE EL MOVIMIENTO';$('raceHint').textContent='DEMO · movimiento detectado a los 1,50 s';}
+     const t=Math.min(duration,sinceGreen-delay);
+     dist=target*Math.pow(t/duration,1.45);
+     updateRace();
+     if(t>=duration){
+       clearInterval(demoInterval);demoInterval=null;phase='review';dist=target;
+       pending={id:uid(),created:new Date().toISOString(),distanceTarget:target,distanceActual:target,reason:'distancia',greenTime:duration+delay,motionTime:duration,delay,maxSpeed:points.at(-1).v,samples:points,partials,warnings:['SIMULACIÓN: no corresponde a una medición real.'],kind:'DEMO',note:''};
+       $('raceClock').textContent='00:'+fmt(duration).padStart(5,'0');
+       $('raceDistance').textContent=`${target} / ${target} m`;$('racePercent').textContent='100 %';
+       finishRaceDisplay();
+     }
+   },70);
+ },2600);
+}
+function renderRuns(){const p=project(),el=$('runList');el.innerHTML='';$('historyPartialsPanel').classList.add('hidden');$('count').textContent=`${p.runs.length} / ${MAX} tiradas aceptadas`;if(!p.runs.length){el.textContent='Todavía no hay tiradas guardadas.';draw();return}for(const r of p.runs){const line=document.createElement('div');line.className='run';const check=document.createElement('input');check.type='checkbox';check.checked=selected.includes(r.id);check.setAttribute('aria-label','Seleccionar tirada');check.onchange=()=>{if(check.checked){if(selected.length>=3){check.checked=false;alert('Podés seleccionar hasta tres tiradas.');return}selected.push(r.id)}else selected=selected.filter(x=>x!==r.id);draw()};const label=document.createElement('label');label.textContent=`${r.kind==='DEMO'?'[DEMO] ':''}${new Date(r.created).toLocaleDateString('es-AR')} · ${r.distanceTarget} m · ${fmt(r.motionTime)} s · demora ${fmt(r.delay)} s`;const del=document.createElement('button');del.textContent='Borrar';del.className='danger compact';del.onclick=()=>{if(confirm('¿Borrar definitivamente esta tirada? Antes podés exportar un respaldo.')){p.runs=p.runs.filter(x=>x.id!==r.id);selected=selected.filter(x=>x!==r.id);persist();draw()}};const splitBtn=document.createElement('button');splitBtn.textContent='Parciales';splitBtn.className='compact';splitBtn.onclick=()=>toggleSplitPanel('historyPartialsPanel',r);line.append(check,label,splitBtn,del);el.append(line)}draw()}
+function draw(){const c=$('chart'),ctx=c.getContext('2d'),w=c.width,h=c.height;ctx.clearRect(0,0,w,h);ctx.fillStyle='#0b1722';ctx.fillRect(0,0,w,h);const runs=project().runs.filter(r=>selected.includes(r.id)),type=$('graphType').value,pad=52;
+ const curves=runs.map(r=>({r,pts:r.samples.map((s,i,a)=>({x:type==='speed'?s.d:s.t,y:type==='speed'||type==='time'?s.v:i>0&&s.t>a[i-1].t?(s.v-a[i-1].v)/3.6/(s.t-a[i-1].t):0})).filter(s=>Number.isFinite(s.x)&&Number.isFinite(s.y))}));
+ const xs=curves.flatMap(a=>a.pts.map(p=>p.x)),ys=curves.flatMap(a=>a.pts.map(p=>p.y)),maxX=Math.max(1,...xs),minY=Math.min(0,...ys),maxY=Math.max(1,...ys),rangeY=maxY-minY||1;ctx.strokeStyle='#385266';ctx.fillStyle='#b6c7d2';ctx.font='15px system-ui';ctx.lineWidth=1;
+ for(let i=0;i<=4;i++){const y=20+i*(h-50)/4;ctx.beginPath();ctx.moveTo(pad,y);ctx.lineTo(w-14,y);ctx.stroke();ctx.fillText(fmt(maxY-rangeY*i/4,0),4,y+5)}for(let i=0;i<=4;i++){const x=pad+i*(w-pad-14)/4;ctx.fillText(fmt(maxX*i/4,0),x-7,h-8)}
+ const colors=['#37e5b2','#f9bd50','#71a9ff'];curves.forEach(({r,pts},i)=>{
+ ctx.beginPath();ctx.strokeStyle=colors[i];ctx.lineWidth=3;pts.forEach((p,j)=>{const x=pad+(p.x/maxX)*(w-pad-14),y=20+(maxY-p.y)/rangeY*(h-50);if(j===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)});ctx.stroke();
+ // Diez marcadores por curva, interpolados desde muestras GPS; no son mediciones nuevas.
+ const splits=partialEntries(r);ctx.lineWidth=2;ctx.strokeStyle=colors[i];ctx.fillStyle='#fff';
+ splits.forEach(p=>{
+  let xValue,yValue;
+  if(type==='speed'){xValue=p.distance;yValue=p.speed;}
+  else if(type==='time'){xValue=p.time;yValue=p.speed;}
+  else {const closest=pts.reduce((a,b)=>Math.abs(b.x-p.time)<Math.abs(a.x-p.time)?b:a,pts[0]);if(!closest)return;xValue=p.time;yValue=closest.y;}
+  if(!Number.isFinite(xValue)||!Number.isFinite(yValue))return;
+  const x=pad+(xValue/maxX)*(w-pad-14),y=20+(maxY-yValue)/rangeY*(h-50);
+  ctx.beginPath();ctx.arc(x,y,5,0,Math.PI*2);ctx.fill();ctx.stroke();
+ });
+});
+ $('comparison').textContent=curves.length?curves.map(({r},i)=>`● Tirada ${i+1} (${r.kind}) · ${fmt(r.motionTime)} s · demora ${fmt(r.delay)} s · ${r.distanceTarget} m`).join('  |  '):'Seleccioná una, dos o tres tiradas para visualizar sus curvas. Compará distancias iguales y separá DEMO de mediciones reales.';
+}
+$('reviewPartialsBtn').onclick=()=>{if(pending)toggleSplitPanel('reviewPartialsPanel',pending)};$('gpsBtn').onclick=activateGPS;$('startBtn').onclick=start;$('demoBtn').onclick=demo;$('saveBtn').onclick=save;$('retryBtn').onclick=()=>{reset();setNotice('Tirada descartada. Preparado para repetir.','ok')};$('stopBtn').onclick=()=>{if(phase==='countdown'){reset();return}finish('manual')};$('project').onchange=e=>{if(['countdown','green','running'].includes(phase)){alert('Finalizá la tirada antes de cambiar de proyecto.');e.target.value=db.active;return}db.active=e.target.value;selected=[];persist()};$('newProject').onclick=()=>{const name=prompt('Nombre del nuevo proyecto:','Nuevo proyecto');if(!name||!name.trim())return;const id=uid();db.projects.push({id,name:name.trim().slice(0,80),runs:[]});db.active=id;selected=[];persist();reset()};$('graphType').onchange=draw;$('compareBtn').onclick=()=>{if(selected.length<2){alert('Elegí dos o tres tiradas para comparar.');return}const runs=project().runs.filter(r=>selected.includes(r.id));if(new Set(runs.map(r=>r.distanceTarget)).size>1)alert('Atención: las tiradas seleccionadas tienen distintas distancias.');draw();$('chart').scrollIntoView({behavior:'smooth'})};$('clearSelect').onclick=()=>{selected=[];renderRuns()};$('exportBtn').onclick=()=>{const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='RS_GPS_Labs_respaldo_'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};$('importBtn').onclick=()=>$('importFile').click();$('importFile').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{if(file.size>15e6)throw Error('Archivo demasiado grande');const data=JSON.parse(await file.text());if(!data||!Array.isArray(data.projects)||data.projects.some(p=>!Array.isArray(p.runs)||p.runs.length>MAX||p.runs.some(r=>!Array.isArray(r.samples))))throw Error('Formato de respaldo no válido');if(!confirm('Importar reemplazará los proyectos locales actuales. ¿Continuar?'))return;db=data;db.active=db.projects.some(p=>p.id===db.active)?db.active:db.projects[0]?.id;if(!db.active)throw Error('No hay proyectos');selected=[];persist();reset()}catch(err){alert('No se pudo importar: '+err.message)}finally{e.target.value=''}};
+
+/* Catálogo DEMO: cinco ensayos sintéticos, aislados de los proyectos GPS. */
+const DEMO_PROJECT_ID='rs-gps-demo-comparacion-v18';
+function makeDemoRun(index){
+ const settings=[
+  {duration:15.8,delay:1.5,shape:1.53,label:'Referencia · salida progresiva'},
+  {duration:14.9,delay:1.2,shape:1.46,label:'Mejora en salida'},
+  {duration:14.4,delay:1.8,shape:1.59,label:'Recuperación en tramo final'},
+  {duration:15.2,delay:0.9,shape:1.39,label:'Salida rápida, menor velocidad final'},
+  {duration:13.9,delay:1.4,shape:1.48,label:'Mejor tiempo general'}
+ ];
+ const s=settings[index],distance=400,N=100;
+ // Curvas sintéticas monótonas, con distancia, velocidad y tiempo coherentes por derivación.
+ const samples=Array.from({length:N+1},(_,j)=>{
+  const t=s.duration*j/N, u=j/N;
+  const d=distance*Math.pow(u,s.shape);
+  const v=j===0?0:3.6*distance*s.shape/s.duration*Math.pow(u,s.shape-1);
+  return {t,d,v,accuracy:3.0};
+ });
+ const partials=Array.from({length:10},(_,j)=>{
+  const d=distance*(j+1)/10;
+  return {distance:d,time:s.duration*Math.pow(d/distance,1/s.shape)};
+ });
+ return {id:'rs-demo-18-'+(index+1),created:new Date(Date.now()-(4-index)*60000).toISOString(),distanceTarget:distance,distanceActual:distance,reason:'distancia',greenTime:s.duration+s.delay,motionTime:s.duration,delay:s.delay,maxSpeed:samples[samples.length-1].v,samples,partials,warnings:['SIMULACIÓN: datos inventados exclusivamente para aprender a usar la comparación.'],kind:'DEMO',note:s.label};
+}
+function ensureFiveDemos(navigate=true){
+ if(navigate&&['countdown','green','running'].includes(phase)){alert('Esperá a terminar la prueba activa.');return;}
+ let p=db.projects.find(p=>p.id===DEMO_PROJECT_ID);
+ if(!p){p={id:DEMO_PROJECT_ID,name:'DEMO · 5 tiradas para comparar',runs:[]};db.projects.push(p);}
+ // Conservar las DEMO existentes, sin sobrescribir pruebas aceptadas adicionales.
+ for(let i=0;i<5;i++)if(!p.runs.some(r=>r.id==='rs-demo-18-'+(i+1)))p.runs.push(makeDemoRun(i));
+ db.active=p.id;selected=p.runs.slice(0,3).map(r=>r.id);
+ if(!persist())return;
+ $('graphType').value='speed';renderProjects();renderRuns();
+ setNotice('Cinco tiradas DEMO disponibles. Tres seleccionadas para comparar.','ok');
+ if(navigate)$('historySection').scrollIntoView({behavior:'smooth'});
+}
+
+setInterval(()=>{if((phase==='green'||phase==='running')&&lastAcceptedFixAt&&Date.now()-lastAcceptedFixAt>FIELD_LOSS_ABORT_MS){
+ warnings.push('Pérdida de señal GPS válida durante más de 5 segundos. Prueba incompleta.');
+ finish('señal GPS perdida');
+ }
+ if(phase==='countdown'||phase==='green'||phase==='running')updateRace();if(phase==='green'||phase==='running'){$('greenClock').textContent=fmt((Date.now()-greenAt)/1000)+' s';$('moveClock').textContent=motionAt===null?'Esperando...':fmt((Date.now()-motionAt)/1000)+' s'}},100);
+renderProjects();renderRuns();
+
+</script></body></html>
