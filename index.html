@@ -37,18 +37,18 @@
 #raceOverlay.phase-finished #raceClock,#raceOverlay.phase-finished #raceDistance,#raceOverlay.phase-finished #raceTrack{display:none!important}
 @media(max-width:500px){#raceOverlay{padding:16px!important}#raceOverlay #raceTrack{height:18vh!important}}
 
-/* Beta 2.6: exactamente dos filas por parcial en móvil */
+/* Beta 2.7: datos grandes y legibles, manteniendo dos filas por parcial */
 .partials-panel{min-width:0;max-width:100%;overflow-wrap:anywhere}
 .partials-panel table{max-width:100%}
 @media(max-width:650px){
- .partials-panel{padding:8px}
+ .partials-panel{padding:4px}
  .partials-panel table,.partials-panel tbody,.partials-panel tr,.partials-panel td,.partials-panel caption{display:block;width:100%;max-width:100%}
  .partials-panel thead{display:none}
  .partials-panel tr{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;padding:0;margin:8px 0;background:#10273a;border:1px solid #36536a;border-radius:9px;overflow:hidden}
- .partials-panel td{display:block;min-width:0;width:auto;max-width:100%;padding:9px 1px;text-align:center!important;border:0;font-size:clamp(9px,2.65vw,13px);white-space:nowrap;overflow-wrap:normal;font-variant-numeric:tabular-nums}
- .partials-panel td:first-child{grid-column:1/-1;text-align:left!important;font-weight:800;font-size:13px;color:#8fe8d5;background:#1c3649;border-bottom:1px solid #36536a;padding:7px 9px}
+ .partials-panel td{display:block;min-width:0;width:auto;max-width:100%;padding:12px 0;text-align:center!important;border:0;font-size:clamp(14px,3.9vw,17px);font-weight:750;letter-spacing:-.35px;white-space:nowrap;overflow-wrap:normal;font-variant-numeric:tabular-nums}
+ .partials-panel td:first-child{grid-column:1/-1;text-align:left!important;font-weight:800;font-size:17px;color:#8fe8d5;background:#1c3649;border-bottom:1px solid #36536a;padding:7px 9px}
  .partials-panel td:not(:first-child)::before{content:none!important;display:none!important}
- .partials-panel td:nth-child(5){color:#b6f5d5;font-weight:700}
+ .partials-panel td:nth-child(5){color:#b6f5d5;font-weight:800;font-size:clamp(12px,3.5vw,16px);letter-spacing:-.5px}
  .partials-panel caption{font-size:11px;line-height:1.4}
 }
 </style><style>
